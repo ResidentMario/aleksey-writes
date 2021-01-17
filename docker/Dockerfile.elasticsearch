@@ -1,0 +1,11 @@
+# Creates a single-node elasticsearch index listening on port 9200 with all
+# included documents indexed.
+FROM docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+WORKDIR /usr/local/
+RUN yum update && yum install -y git && yum clean packages
+RUN git clone --depth 1 \
+        https://github.com/ResidentMario/aleksey-writes-documents.git \
+        /usr/local/documents/
+# TODO: HTML -> plaintext parse the cloned document tree.
+# Then index it in ES with {id: UID, text: TEXT} JSON structure.
+# Start a ES process listening on port 9200.
