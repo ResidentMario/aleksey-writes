@@ -64,16 +64,7 @@ impl Document {
 
         let document_type_path: String = base_path.to_owned() + "/" + self.document_type_as_str();
         if !Path::new(&document_type_path).exists() {
-            std::fs::create_dir(&document_type_path).map_err(|_| {
-                HTML2DocumentsError::IOError(
-                    String::from("Error while trying to create document type directory.")
-                )
-            })?;
-            std::fs::create_dir(&document_type_path).map_err(|_| {
-                HTML2DocumentsError::IOError(
-                    String::from("Error while trying to create document type directory.")
-                )
-            })?;
+            create_dir(&document_type_path)?;
         }
 
         let documents_path: String = document_type_path + "/" + &self.uid;
@@ -84,11 +75,7 @@ impl Document {
                         String::from("Error while trying to delete non-empty documents directory.")
                     )
                 })?;
-                std::fs::create_dir(&documents_path).map_err(|_| {
-                    HTML2DocumentsError::IOError(
-                        String::from("Error while trying to create documents directory.")
-                    )
-                })?;
+                create_dir(&documents_path)?;
             }
             else {
                 return Err(HTML2DocumentsError::IOError(
@@ -99,11 +86,7 @@ impl Document {
             }            
         }
         else {
-            std::fs::create_dir(&documents_path).map_err(|_| {
-                HTML2DocumentsError::IOError(
-                    String::from("Error while trying to create documents directory.")
-                )
-            })?;
+            create_dir(&documents_path)?;
         }
 
         let plaintext_document_path: String = documents_path + "/" + "plaintext.txt";
@@ -166,6 +149,14 @@ fn read_file(path: &str) -> Result<SelectDocument, HTML2DocumentsError> {
     // Actually read and return the document.
     let document = SelectDocument::from(contents.as_str());
     Ok(document)
+}
+
+fn create_dir(path: &str) -> Result<(), HTML2DocumentsError> {
+    std::fs::create_dir(path).map_err(|_| {
+        HTML2DocumentsError::IOError(
+            String::from("Error while trying to create documents directory.")
+        )
+    })
 }
 
 fn to_plaintext_medium(document: &SelectDocument) -> String {
