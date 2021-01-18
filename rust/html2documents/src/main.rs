@@ -10,10 +10,28 @@ fn main() {
     //     "/Users/alekseybilogur/Desktop/aleksey-writes-documents",
     //     true,
     // ).unwrap();
+    // let document = Document::new(
+    //     DocumentType::Spell,
+    //     "/Users/alekseybilogur/Desktop/mixed-precision.html",
+    //     "mixed-precision-training"
+    // ).unwrap();
+    // document.write(
+    //     "/Users/alekseybilogur/Desktop/aleksey-writes-documents",
+    //     true,
+    // ).unwrap();
+    // let document = Document::new(
+    //     DocumentType::Website,
+    //     "/Users/alekseybilogur/Desktop/python-mixins.html",
+    //     "python-mixins"
+    // ).unwrap();
+    // document.write(
+    //     "/Users/alekseybilogur/Desktop/aleksey-writes-documents",
+    //     true,
+    // ).unwrap();
     let document = Document::new(
-        DocumentType::Kaggle,
-        "/Users/alekseybilogur/Desktop/s3.html",
-        "s3-intelligent-tiering"
+        DocumentType::Notion,
+        "/Users/alekseybilogur/Desktop/ludwig.html",
+        "ludwig-notes"
     ).unwrap();
     document.write(
         "/Users/alekseybilogur/Desktop/aleksey-writes-documents",

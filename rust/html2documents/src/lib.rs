@@ -3,8 +3,7 @@ use std::io::{Read, Write};
 use std::fs::File;
 use std::iter::Iterator;
 
-use select::{document::Document as SelectDocument, predicate::Predicate};
-use snailquote::unescape;
+use select::document::Document as SelectDocument;
 
 pub mod err;
 use err::{Result, HTML2DocumentsError};
@@ -12,7 +11,6 @@ use err::{Result, HTML2DocumentsError};
 pub enum DocumentType {
     Medium,
     Website,
-    Kaggle,
     Notion,
     Spell,
 }
@@ -40,7 +38,6 @@ impl Document {
     fn document_type_as_str(&self) -> &str {
         match self.document_type {
             DocumentType::Medium => "medium",
-            DocumentType::Kaggle => "kaggle",
             DocumentType::Notion => "notion",
             DocumentType::Spell => "spell",
             DocumentType::Website => "website",
@@ -108,12 +105,15 @@ pub struct DocumentParser {
 
 impl Parser for DocumentParser {
     fn to_plaintext(&self) -> Result<String> {
-        let result = match self.document_type {
-            DocumentType::Medium => to_plaintext_medium(&self.raw_html),
-            DocumentType::Kaggle => to_plaintext_kaggle(&self.raw_html),
-            _ => Ok(String::from("Hello World!")),
-        };
-        result
+        let mut paragraphs = vec![];
+        self.raw_html.find(select::predicate::Name("p")).for_each(|node| {
+            paragraphs.push(node.text());
+        });
+        let result = paragraphs.into_iter().map(
+            // TODO: use Pattern syntax to make a single replace scan instead of two.
+            |t| { (t + " ").replace("“", "\"").replace("”", "\"") }
+        ).collect();
+        Ok(result)
     }
 }
 
@@ -123,9 +123,8 @@ fn read_file(path: &str) -> Result<SelectDocument> {
     if !(fp.exists()) {
         return Err(
             HTML2DocumentsError::new_io_error(
-                "The given path does not exist or is not a directory."
-            )
-        );
+            "The given path does not exist or is not a directory."
+        ));
     }
 
     let mut file = File::open(path).map_err(|e| { HTML2DocumentsError::IOError(e) })?;
@@ -142,20 +141,10 @@ fn create_dir(path: &str) -> Result<()> {
     std::fs::create_dir(path).map_err(|e| { HTML2DocumentsError::IOError(e) })
 }
 
-fn to_plaintext_medium(document: &SelectDocument) -> Result<String> {
-    /*  Parsing Medium to plaintext is easy: just select the text inside the p tags on the page.
-        There is a little bit junk text that comes along as well, but nothing too major.
-     */
-    let mut paragraphs = vec![];
-    document.find(select::predicate::Name("p")).for_each(|node| {
-        paragraphs.push(node.text());
-    });
-    let result = paragraphs.into_iter().map(
-        // TODO: use Pattern syntax to make a single replace scan instead of two.
-        |t| { (t + " ").replace("“", "\"").replace("”", "\"") }
-    ).collect();
-    Ok(result)
-}
+/*  Doesn't work!
+
+    Best bet is to download via the Kaggle API instead. And then parse the Jupyter notebook.
+    I will implement this in a different Rust package.
 
 fn to_plaintext_kaggle(document: &SelectDocument) -> Result<String> {
     /*  Kaggle dumps the Jupyter source into the interior of a JS <script>, which executes
@@ -196,3 +185,4 @@ fn to_plaintext_kaggle(document: &SelectDocument) -> Result<String> {
     println!("{:?}", jupyter_script_node_text);
     Ok(String::from("Hello World"))
 }
+*/
