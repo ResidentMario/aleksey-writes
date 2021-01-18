@@ -49,15 +49,14 @@ impl Document {
             DocumentType::Notion => "notion",
             DocumentType::Spell => "spell",
             DocumentType::Website => "website",
-            _ => panic!("Library error, unknown document type.")
         }
     }
 
     pub fn write(&self, base_path: &str, overwrite: bool) -> Result<(), HTML2DocumentsError> {
         // A metric butt-ton of directory creation and/or deletion boilerplate.
         // TODO: consolidate this stuff using helper functions.
-        let base_dir_struct = Path::new(base_path);
-        if !(base_dir_struct.exists() && base_dir_struct.is_dir()) {
+        let base_dir_path = Path::new(base_path);
+        if !(base_dir_path.exists() && base_dir_path.is_dir()) {
             return Err(HTML2DocumentsError::IOError(
                 String::from("The given path does not exist or is not a directory.")
             ));
@@ -65,29 +64,31 @@ impl Document {
 
         let document_type_path: String = base_path.to_owned() + "/" + self.document_type_as_str();
         if !Path::new(&document_type_path).exists() {
-            match std::fs::create_dir(&document_type_path) {
-                Ok(_) => (),
-                Err(_) => return Err(HTML2DocumentsError::IOError(
+            std::fs::create_dir(&document_type_path).map_err(|_| {
+                HTML2DocumentsError::IOError(
                     String::from("Error while trying to create document type directory.")
-                ))
-            }    
+                )
+            })?;
+            std::fs::create_dir(&document_type_path).map_err(|_| {
+                HTML2DocumentsError::IOError(
+                    String::from("Error while trying to create document type directory.")
+                )
+            })?;
         }
 
         let documents_path: String = document_type_path + "/" + &self.uid;
         if Path::new(&documents_path).exists() {
             if overwrite {
-                match std::fs::remove_dir_all(&documents_path) {
-                    Ok(_) => (),
-                    Err(_) => return Err(HTML2DocumentsError::IOError(
+                std::fs::remove_dir_all(&documents_path).map_err(|_| {
+                    HTML2DocumentsError::IOError(
                         String::from("Error while trying to delete non-empty documents directory.")
-                    ))
-                }
-                match std::fs::create_dir(&documents_path) {
-                    Ok(_) => (),
-                    Err(_) => return Err(HTML2DocumentsError::IOError(
+                    )
+                })?;
+                std::fs::create_dir(&documents_path).map_err(|_| {
+                    HTML2DocumentsError::IOError(
                         String::from("Error while trying to create documents directory.")
-                    ))
-                }
+                    )
+                })?;
             }
             else {
                 return Err(HTML2DocumentsError::IOError(
@@ -98,38 +99,32 @@ impl Document {
             }            
         }
         else {
-            match std::fs::create_dir(&documents_path) {
-                Ok(_) => (),
-                Err(_) => return Err(HTML2DocumentsError::IOError(
+            std::fs::create_dir(&documents_path).map_err(|_| {
+                HTML2DocumentsError::IOError(
                     String::from("Error while trying to create documents directory.")
-                ))
-            }
+                )
+            })?;
         }
 
         let plaintext_document_path: String = documents_path + "/" + "plaintext.txt";
-        println!("{}", plaintext_document_path);
-        let mut fp = match File::create(plaintext_document_path) {
-            Ok(fp) => fp,
-            Err(_) => return Err(HTML2DocumentsError::IOError(
+        let mut fp = File::create(plaintext_document_path).map_err(|_| {
+            HTML2DocumentsError::IOError(
                 String::from("Error while trying to open plaintext document file.")
-            ))
-        };
-        match fp.write_all(self.plaintext.as_bytes()) {
-            Ok(_) => Ok(()),
-            Err(_) => return Err(HTML2DocumentsError::IOError(
+            )
+        })?;
+        fp.write_all(self.plaintext.as_bytes()).map_err(|_| {
+            HTML2DocumentsError::IOError(
                 String::from("Error while writing to plaintext document file.")
-            ))
-        }
+            )
+        })?;
+        Ok(())
     }
 }
 
 pub trait Parser {
     fn new(document_type: DocumentType, path: &str)
         -> Result<DocumentParser, HTML2DocumentsError> {
-        let raw_html = match read_file(path) {
-            Ok(d) => d,
-            Err(e) => return Err(e),
-        };
+        let raw_html = read_file(path)?;
         Ok(DocumentParser { document_type, raw_html })
     }
     fn to_plaintext(&self) -> String;
@@ -159,23 +154,14 @@ fn read_file(path: &str) -> Result<SelectDocument, HTML2DocumentsError> {
         ));
     }
 
-    let file = File::open(path);
-    let mut file = match file {
-        Ok(f) => (f),
-        Err(_) => {
-            return Err(HTML2DocumentsError::IOError(
-                String::from("The given file could not be opened.")
-            ))
-        }
-    };
+    let mut file = File::open(path).map_err(
+        |_| { HTML2DocumentsError::IOError(String::from("The given file could not be opened.")) }
+    )?;
     let mut contents = String::new();
     let read_result = file.read_to_string(&mut contents);
-    match read_result {
-        Ok(_) => (),
-        Err(_) => return Err(HTML2DocumentsError::IOError(
-            String::from("The given file could not be read.")
-        ))
-    };
+    read_result.map_err(
+        |_| { HTML2DocumentsError::IOError(String::from("The given file could not be read.")) }
+    )?;
 
     // Actually read and return the document.
     let document = SelectDocument::from(contents.as_str());
