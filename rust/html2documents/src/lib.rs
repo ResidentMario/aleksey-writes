@@ -1,8 +1,11 @@
 use select::{document::Document as SelectDocument};
 use select::predicate::{Name};
+use std::io;
 use std::{io::{Read, Write}, path::Path};
 use std::{fs::File};
 use std::{iter::Iterator};
+
+pub type Result<T> = std::result::Result<T, HTML2DocumentsError>;
 
 pub enum DocumentType {
     Medium,
@@ -14,7 +17,7 @@ pub enum DocumentType {
 
 #[derive(Debug)]
 pub enum HTML2DocumentsError {
-    IOError(String),
+    IOError(io::Error),
 } 
 
 pub struct Document {
@@ -25,8 +28,7 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn new(document_type: DocumentType, path: &str, uid: &str)
-        -> Result<Document, HTML2DocumentsError> {
+    pub fn new(document_type: DocumentType, path: &str, uid: &str) -> Result<Document> {
         let parser = DocumentParser::new(document_type, path);
         let parser = match parser {
             Ok(p) => p,
@@ -52,13 +54,14 @@ impl Document {
         }
     }
 
-    pub fn write(&self, base_path: &str, overwrite: bool) -> Result<(), HTML2DocumentsError> {
-        // A metric butt-ton of directory creation and/or deletion boilerplate.
-        // TODO: consolidate this stuff using helper functions.
+    pub fn write(&self, base_path: &str, overwrite: bool) -> Result<()> {
         let base_dir_path = Path::new(base_path);
         if !(base_dir_path.exists() && base_dir_path.is_dir()) {
             return Err(HTML2DocumentsError::IOError(
-                String::from("The given path does not exist or is not a directory.")
+                io::Error::new(
+                    io::ErrorKind::Other, 
+                    "The given path does not exist or is not a directory."
+                )
             ));
         }
 
@@ -70,16 +73,15 @@ impl Document {
         let documents_path: String = document_type_path + "/" + &self.uid;
         if Path::new(&documents_path).exists() {
             if overwrite {
-                std::fs::remove_dir_all(&documents_path).map_err(|_| {
-                    HTML2DocumentsError::IOError(
-                        String::from("Error while trying to delete non-empty documents directory.")
-                    )
+                std::fs::remove_dir_all(&documents_path).map_err(|e| {
+                    HTML2DocumentsError::IOError(e)
                 })?;
                 create_dir(&documents_path)?;
             }
             else {
                 return Err(HTML2DocumentsError::IOError(
-                    String::from(
+                    io::Error::new(
+                        io::ErrorKind::Other, 
                         "The documents directory already exists and overwrite is set to false."
                     )
                 ));
@@ -90,23 +92,18 @@ impl Document {
         }
 
         let plaintext_document_path: String = documents_path + "/" + "plaintext.txt";
-        let mut fp = File::create(plaintext_document_path).map_err(|_| {
-            HTML2DocumentsError::IOError(
-                String::from("Error while trying to open plaintext document file.")
-            )
+        let mut fp = File::create(plaintext_document_path).map_err(|e| {
+            HTML2DocumentsError::IOError(e)
         })?;
-        fp.write_all(self.plaintext.as_bytes()).map_err(|_| {
-            HTML2DocumentsError::IOError(
-                String::from("Error while writing to plaintext document file.")
-            )
+        fp.write_all(self.plaintext.as_bytes()).map_err(|e| {
+            HTML2DocumentsError::IOError(e)
         })?;
         Ok(())
     }
 }
 
 pub trait Parser {
-    fn new(document_type: DocumentType, path: &str)
-        -> Result<DocumentParser, HTML2DocumentsError> {
+    fn new(document_type: DocumentType, path: &str) -> Result<DocumentParser> {
         let raw_html = read_file(path)?;
         Ok(DocumentParser { document_type, raw_html })
     }
@@ -128,35 +125,27 @@ impl Parser for DocumentParser {
     }
 }
 
-fn read_file(path: &str) -> Result<SelectDocument, HTML2DocumentsError> {
+fn read_file(path: &str) -> Result<SelectDocument> {
     // Ensure the file exists and can be read by the executing user.
     let fp = Path::new(path);
     if !(fp.exists()) {
         return Err(HTML2DocumentsError::IOError(
-            String::from("No document exists at the given path.")
+            io::Error::new(io::ErrorKind::Other, "No document exists at the given path.")
         ));
     }
 
-    let mut file = File::open(path).map_err(
-        |_| { HTML2DocumentsError::IOError(String::from("The given file could not be opened.")) }
-    )?;
+    let mut file = File::open(path).map_err(|e| { HTML2DocumentsError::IOError(e) })?;
     let mut contents = String::new();
     let read_result = file.read_to_string(&mut contents);
-    read_result.map_err(
-        |_| { HTML2DocumentsError::IOError(String::from("The given file could not be read.")) }
-    )?;
+    read_result.map_err(|e| { HTML2DocumentsError::IOError(e) })?;
 
     // Actually read and return the document.
     let document = SelectDocument::from(contents.as_str());
     Ok(document)
 }
 
-fn create_dir(path: &str) -> Result<(), HTML2DocumentsError> {
-    std::fs::create_dir(path).map_err(|_| {
-        HTML2DocumentsError::IOError(
-            String::from("Error while trying to create documents directory.")
-        )
-    })
+fn create_dir(path: &str) -> Result<()> {
+    std::fs::create_dir(path).map_err(|e| { HTML2DocumentsError::IOError(e) })
 }
 
 fn to_plaintext_medium(document: &SelectDocument) -> String {
