@@ -1,10 +1,20 @@
 use std::io;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum HTML2DocumentsError {
     IOError(io::Error),
     ParseError(io::Error)
 } 
+
+impl fmt::Display for HTML2DocumentsError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            HTML2DocumentsError::IOError(e) => { write!(f, "{}", e) },
+            HTML2DocumentsError::ParseError(e) => { write!(f, "{}", e) },
+        }
+    }
+}
 
 impl HTML2DocumentsError {
     pub fn new_io_error(msg: &str) -> HTML2DocumentsError {

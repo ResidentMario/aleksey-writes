@@ -2,6 +2,7 @@ use std::path::Path;
 use std::io::{Read, Write};
 use std::fs::File;
 use std::iter::Iterator;
+use std::str::FromStr;
 
 use select::document::Document as SelectDocument;
 
@@ -13,6 +14,19 @@ pub enum DocumentType {
     Website,
     Notion,
     Spell,
+}
+
+impl FromStr for DocumentType {
+    type Err = HTML2DocumentsError;
+    fn from_str(s: &str) -> Result<Self> {
+        match s {
+            "medium" => Ok(DocumentType::Medium),
+            "notion" => Ok(DocumentType::Notion),
+            "spell" => Ok(DocumentType::Spell),
+            "website" => Ok(DocumentType::Website),
+            _ => Err(err::HTML2DocumentsError::new_io_error("Invalid document type identifier."))
+        }
+    }
 }
 
 pub struct Document {
