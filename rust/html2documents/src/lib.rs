@@ -1,11 +1,12 @@
-use select::{document::Document as SelectDocument};
-use select::predicate::{Name};
+use select::document::Document as SelectDocument;
 use std::io;
-use std::{io::{Read, Write}, path::Path};
-use std::{fs::File};
-use std::{iter::Iterator};
+use std::path::Path;
+use std::io::{Read, Write};
+use std::fs::File;
+use std::iter::Iterator;
 
-pub type Result<T> = std::result::Result<T, HTML2DocumentsError>;
+pub mod err;
+use err::{Result, HTML2DocumentsError};
 
 pub enum DocumentType {
     Medium,
@@ -14,11 +15,6 @@ pub enum DocumentType {
     Notion,
     Spell,
 }
-
-#[derive(Debug)]
-pub enum HTML2DocumentsError {
-    IOError(io::Error),
-} 
 
 pub struct Document {
     pub document_type: DocumentType,
@@ -57,12 +53,9 @@ impl Document {
     pub fn write(&self, base_path: &str, overwrite: bool) -> Result<()> {
         let base_dir_path = Path::new(base_path);
         if !(base_dir_path.exists() && base_dir_path.is_dir()) {
-            return Err(HTML2DocumentsError::IOError(
-                io::Error::new(
-                    io::ErrorKind::Other, 
-                    "The given path does not exist or is not a directory."
-                )
-            ));
+            return Err(
+                HTML2DocumentsError::new("The given path does not exist or is not a directory.")
+            );
         }
 
         let document_type_path: String = base_path.to_owned() + "/" + self.document_type_as_str();
@@ -79,12 +72,9 @@ impl Document {
                 create_dir(&documents_path)?;
             }
             else {
-                return Err(HTML2DocumentsError::IOError(
-                    io::Error::new(
-                        io::ErrorKind::Other, 
-                        "The documents directory already exists and overwrite is set to false."
-                    )
-                ));
+                return Err(
+                    HTML2DocumentsError::new("The documents dir exists and overwrite is false.")
+                );
             }            
         }
         else {
@@ -129,9 +119,9 @@ fn read_file(path: &str) -> Result<SelectDocument> {
     // Ensure the file exists and can be read by the executing user.
     let fp = Path::new(path);
     if !(fp.exists()) {
-        return Err(HTML2DocumentsError::IOError(
-            io::Error::new(io::ErrorKind::Other, "No document exists at the given path.")
-        ));
+        return Err(
+            HTML2DocumentsError::new("The given path does not exist or is not a directory.")
+        );
     }
 
     let mut file = File::open(path).map_err(|e| { HTML2DocumentsError::IOError(e) })?;
@@ -150,7 +140,7 @@ fn create_dir(path: &str) -> Result<()> {
 
 fn to_plaintext_medium(document: &SelectDocument) -> String {
     let mut paragraphs = vec![];
-    document.find(Name("p")).for_each(|node| {
+    document.find(select::predicate::Name("p")).for_each(|node| {
         paragraphs.push(node.text());
     });
     let result = paragraphs.into_iter().map(
