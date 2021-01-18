@@ -2,7 +2,7 @@ use html2documents::{DocumentType, Document};
 
 use structopt::StructOpt;
 
-const DEFAULT_OUTPATH: &str = "/Users/alekseybilogur/Desktop/aleksey-writes-documents";
+const DEFAULT_OUTPATH: &str = "/Users/alekseybilogur/Desktop/aleksey-writes-documents/working";
 #[derive(StructOpt)]
 /// Example usage:
 ///
