@@ -20,7 +20,7 @@ done
 
 for DOC in $(ls $RAW_PATH/medium/); do
     cargo run \
-        spell \
+        medium \
         "$RAW_PATH/medium/$DOC" \
         $(echo $DOC | sed -E "s/.html//") \
         --overwrite
