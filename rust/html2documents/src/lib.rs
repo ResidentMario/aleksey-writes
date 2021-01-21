@@ -14,6 +14,7 @@ pub enum DocumentType {
     Website,
     Notion,
     Spell,
+    Kaggle,
 }
 
 impl FromStr for DocumentType {
@@ -24,6 +25,7 @@ impl FromStr for DocumentType {
             "notion" => Ok(DocumentType::Notion),
             "spell" => Ok(DocumentType::Spell),
             "website" => Ok(DocumentType::Website),
+            "kaggle" => Ok(DocumentType::Kaggle),
             _ => Err(err::HTML2DocumentsError::new_io_error("Invalid document type identifier."))
         }
     }
@@ -55,6 +57,7 @@ impl Document {
             DocumentType::Notion => "notion",
             DocumentType::Spell => "spell",
             DocumentType::Website => "website",
+            DocumentType::Kaggle => "kaggle"
         }
     }
 
@@ -154,49 +157,3 @@ fn read_file(path: &str) -> Result<SelectDocument> {
 fn create_dir(path: &str) -> Result<()> {
     std::fs::create_dir(path).map_err(|e| { HTML2DocumentsError::IOError(e) })
 }
-
-/*  Doesn't work!
-
-    Best bet is to download via the Kaggle API instead. And then parse the Jupyter notebook.
-    I will implement this in a different Rust package.
-
-fn to_plaintext_kaggle(document: &SelectDocument) -> Result<String> {
-    /*  Kaggle dumps the Jupyter source into the interior of a JS <script>, which executes
-        Kaggle.State.push($JUPYTER_SOURCE), where $JUPYTER_SOURCE is a JSON Jupyter struct,
-        escaped, as a string.
-
-        I'm using "Kaggle.State.push(" as the opening sentinel and
-        ");performance && performance.mark" as the closing sentinel. This may change if/when the
-        Kaggle source code changes, it's not very robust, but it works well enough for my
-        purposes, as I don't publish anything on Kaggle anymore anyway, so if it starts failing in
-        the future I'm not much affected :).
-     */
-    let make_err = || {
-        HTML2DocumentsError::new_parse_error(
-            "Failed to parse Kaggle page input: the page provided did not meet the parser's 
-            structural expectations. Perhaps the Kaggle page layout has changed?"
-        )
-    };
-    let jupyter_script_node = document.find(
-        select::predicate::Attr("id", "site-body")
-        .descendant(select::predicate::Class("kaggle-component")))
-        .next()
-        .ok_or_else(make_err)?;
-    let jupyter_script_node_text = jupyter_script_node.text();
-    let (start_token, end_token) = ("Kaggle.State.push(", ");performance && performance.mark");
-    let start_idx = jupyter_script_node_text
-        .find(start_token)
-        .ok_or_else(make_err)
-        .map(|v| { v + start_token.len() })?;
-    let end_idx = jupyter_script_node_text
-        .find(end_token)
-        .ok_or_else(make_err)?;
-    
-    let jupyter_script_node_text = &jupyter_script_node_text[start_idx..end_idx];
-    let jupyter_script_node_text = 
-        unescape(jupyter_script_node_text)
-            .map_err(|e| { HTML2DocumentsError::new_parse_error(&format!("{:?}", e)) })?;
-    println!("{:?}", jupyter_script_node_text);
-    Ok(String::from("Hello World"))
-}
-*/

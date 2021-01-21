@@ -25,4 +25,12 @@ for DOC in $(ls $RAW_PATH/medium/); do
         $(echo $DOC | sed -E "s/.html//") \
         --overwrite
 done
+
+for DOC in $(ls $RAW_PATH/kaggle/); do
+    cargo run \
+        kaggle \
+        "$RAW_PATH/kaggle/$DOC" \
+        $(echo $DOC | sed -E "s/.html//") \
+        --overwrite
+done
 popd
