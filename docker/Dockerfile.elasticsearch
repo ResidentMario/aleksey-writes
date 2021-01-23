@@ -3,9 +3,13 @@
 FROM docker.elastic.co/elasticsearch/elasticsearch:7.10.2
 WORKDIR /usr/local/
 RUN yum update && yum install -y git && yum clean packages
+COPY entrypoint.sh bin/aleksey-writes-entrypoint.sh
+RUN chmod +x bin/aleksey-writes-entrypoint.sh 
 RUN git clone --depth 1 \
-        https://github.com/ResidentMario/aleksey-writes-documents.git \
-        /usr/local/documents/
+    https://github.com/ResidentMario/aleksey-writes-documents.git \
+    /usr/local/documents/
+ENTRYPOINT ["bin/aleksey-writes-entrypoint.sh"]
 # TODO: HTML -> plaintext parse the cloned document tree.
 # Then index it in ES with {id: UID, text: TEXT} JSON structure.
 # Start a ES process listening on port 9200.
+# find /usr/local/documents/working/kaggle/ -regex ".*.txt" -exec
