@@ -61,7 +61,7 @@ kernels = pd.read_csv('kernels.txt')
 kernels = list(
     map(
         lambda k: dict(
-            uid=k.replace('residentmario/', '') + '.html',
+            uid=k.replace('residentmario/', ''),
             link='https://www.kaggle.com/' + k,
             backup='https://web.archive.org/web/https://www.kaggle.com/' + k
         ),
