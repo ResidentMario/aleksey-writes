@@ -9,14 +9,13 @@ bash bin/docker-entrypoint.sh &
 # own signal handler, which terminates the child process.
 # Cf. https://unix.stackexchange.com/questions/146756/forward-sigterm-to-child-in-bash
 ES_PROCESS_PID=$!
-echo "ES_PROCESS_ID IS $ES_PROCESS_PID"
 terminate() {
     kill -s TERM "$ES_PROCESS_PID" 2>/dev/null
 }
 trap terminate SIGTERM
 trap terminate SIGINT
 
-# Wait for it to start.
+# Wait for ES to start.
 sleep 5
 while true
 do
@@ -29,11 +28,31 @@ do
     fi
 done
 
-# Push in data.
-# TODO: write this bit. Probably via python -c.
-# find /usr/local/documents/working/kaggle/ \
-#     -regex ".*.txt" \
-#     -exec jupyter nbconvert --to html --output-dir $KERNELS_RAW_HTML_HOME {} \;
+# Populate ES.
+echo "Populating ElasticSearch..."
+PYTHON_WRITE_SCRIPT=$(cat << EOF
+import json
+import requests
+document_idx = 1
+for document_type in ['website']:
+    with open('/usr/local/documents/mappings/' + document_type + '.json', 'r') as fp:
+        mappings = json.load(fp)
+        for mapping in mappings:
+            uid = mapping['uid'].replace('.html', '')
+            mapping['document_type'] = document_type
+            plaintext = (
+                '/usr/local/documents/working/' + document_type + '/' + uid + '/plaintext.txt'
+            )
+            with open(plaintext, 'r') as fp:
+                mapping['content'] = fp.read()
+            requests.post(
+                'http://localhost:9200/document/_doc/' + str(document_idx) + '?pretty', json=mapping
+            )
+            document_idx += 1
+print("Done populating ElasticSearch 😎. Wrote " + str(document_idx) " documents total.")
+EOF
+)
+python3 -c "$PYTHON_WRITE_SCRIPT"
 
 # Wait for the child process to exit. This pattern of using wait is considered correct behavior
 # in scripts; job control with fg, though useable by setting set -m, is recommended for
