@@ -34,7 +34,7 @@ PYTHON_WRITE_SCRIPT=$(cat << EOF
 import json
 import requests
 document_idx = 1
-for document_type in ['website']:
+for document_type in ['website', 'spell', 'medium', 'kaggle']:
     with open('/usr/local/documents/mappings/' + document_type + '.json', 'r') as fp:
         mappings = json.load(fp)
         for mapping in mappings:
@@ -49,7 +49,7 @@ for document_type in ['website']:
                 'http://localhost:9200/document/_doc/' + str(document_idx) + '?pretty', json=mapping
             )
             document_idx += 1
-print("Done populating ElasticSearch 😎. Wrote " + str(document_idx) " documents total.")
+print('Done populating ElasticSearch 😎. Wrote ' + str(document_idx) + ' documents total.')
 EOF
 )
 python3 -c "$PYTHON_WRITE_SCRIPT"
