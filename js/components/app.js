@@ -7,7 +7,11 @@ import SearchBox from './search_box';
 
 class App extends Component {
     render() {
-        return <SearchBox />;
+        return <div id="app-frame">
+            <div id="app-padding-left" />
+            <SearchBox />
+            <div id="app-padding-right" />
+        </div>;
     }
 
 }

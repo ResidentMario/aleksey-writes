@@ -1,5 +1,89 @@
+body {
+    color: white;
+    margin: 0;
+    height: 100vh;
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+#root {
+    font-family: 'Roboto', sans-serif;    
+}
+/* .search-box-frame {
+    margin: auto;
+} */
+#app-frame {
+    display: grid;
+    grid-template-columns: 1fr 800px 1fr;
+    justify-content: space-between;
+}
+#app-padding-left {
+    grid-row: 1;
+    grid-column: 1;
+}
 .search-box-frame {
-    border: 1px solid black;
-    border-radius: 5px;
-    padding: 5px;
+    grid-row: 1;
+    grid-column: 2;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#app-padding-right {
+    grid-row: 1;
+    grid-column: 3;
+}
+.search-query-frame {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid lightgray;
+    padding: 0.4em;
+    display: flex;
+    flex-direction: row;
+    padding-left: 0.8em;
+}
+.search-query-frame:hover {
+    box-shadow: 0 0 10px lightgray;
+}
+.search-button {
+    font-size: 14px;
+    padding: 0.6em 1.2em;
+    border: none;
+    border-radius: 4px;
+    background: rgb(248, 249, 250);
+    cursor: pointer;
+    margin: 20px 10px 0 10px;
+    /* adding a 1px transparent border makes it so the element doesn't shift vertically when
+       we add a 1px visible border on hover */
+    border: 1px solid transparent;
+}
+.search-button:hover {
+    border: 1px solid lightgray;
+    box-shadow: 0 0 4px lightgray;
+}
+#search-query {
+    width: 100%;
+    font-size: 18px;
+    border: none;
+}
+#search-query:focus {
+    outline: none !important;
+}
+.magnifying-glass-icon {
+    height: 24px;
+    width: 24px;
+    margin-right: 0.4em;
+}
+.search-button-container {
+    text-align:center;
+}
+.some-jackass {
+    height: 120px;
+    width: 120px;
+    border-radius: 60px;
+    background-image: url("/static/img/social.png");
+    background-position: center;
+    background-size: 120px;
+    margin-bottom: 20px;
 }
