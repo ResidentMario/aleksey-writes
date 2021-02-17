@@ -7,10 +7,10 @@ Supports documents from the following list of valid `type` values:
 * https://medium.com articles (`medium/`)
 * https://residentmar.io blog posts (`website/`)
 * https://spell.ml/blog/ blog posts (`spell/`)
+* https://kaggle.com notebooks (`kaggle/`)
 
 Will hopefully support the following one day soon:
 
-* https://kaggle.com notebooks (`kaggle/`)
 * https://notion.so pages (`notion/`)
 
 These are the types interesting to me personally because they are the services that host my various writings.

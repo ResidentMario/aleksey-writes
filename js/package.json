@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npx browserify -t [babelify --presets [ @babel/preset-react @babel/preset-env ] ] static/index.js -o static/dist/index.js",
+    "build:local": "npx browserify -t [ babelify --presets [ @babel/preset-react @babel/preset-env ] ] -t [ envify --ELASTICSEARCH_SERVICE_URL http://localhost:9200/_search?pretty ] static/index.js -o static/dist/index.js",
     "serve:local": "http-server ."
   },
   "author": "",
@@ -16,6 +16,7 @@
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
     "core-js": "^3.8.3",
+    "envify": "^4.1.0",
     "http-server": "^0.12.3"
   },
   "dependencies": {

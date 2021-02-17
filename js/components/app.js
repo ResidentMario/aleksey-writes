@@ -3,9 +3,6 @@ import SearchBox from './search_box';
 import ResultPage from './result_page';
 import { BrowserRouter as Router, Route, Switch, useHistory } from 'react-router-dom';
 
-// import rp from 'request-promise-native';
-
-
 function App() {
     return <Router>
         <Switch>

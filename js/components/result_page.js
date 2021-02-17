@@ -1,27 +1,96 @@
 import React from 'react';
 import { Component } from 'react';
-
+import ResultBlock from './result_block';
 class ResultPage extends Component {
+    constructor() {
+        super();
+        const params = new URLSearchParams(window.location.search); 
+        const query = params.get('text');
+        this.state = {
+            query: query,
+            results: null,
+            reached_es: null,
+        }
+    }
+
     onClickBack() {
         this.props.history.goBack();
     }
 
+    getResults() {
+        // NOTE(aleksey): we handle the case where the request fails, but not the case where the
+        // request is timing out. Mostly because there is no built-in timeout support in the
+        // native fetch API. Hopefully the service is well-behaved in this regard!
+        const esUrl = process.env.ELASTICSEARCH_SERVICE_URL;
+        return fetch(esUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: `{"query": {"match": {"content": {"query": "${this.state.query}"}}}}`
+        })
+        .then(response => {
+            response.json().then(results => {
+                this.setState({...this.state, "results": results, "reached_es": true});
+            })
+        })
+        .catch(_ => this.setState({...this.state, "reached_es": false}))
+    }
+
+    componentDidMount() {
+        this.getResults();
+    }
+
     render() {
-        const params = new URLSearchParams(window.location.search); 
-        const text = params.get('text');
+        if (this.state.reached_es === false) {
+            return <div id="result-page-frame">
+                <div id="result-page-padding-left" />
+                <div id="result-page-content-frame" style={{color: "red"}}>
+                    Could not reach ElasticSearch. Please try again later. :(
+                </div>
+                <div id="result-page-padding-right" />
+            </div>;
+        }
+
+        let resultsBlocks = [];
+        if (this.state.results === null) {            
+            resultsBlocks = [
+                <ResultBlock placeholder={true} key={0}/>,
+                <ResultBlock placeholder={true} key={1}/>,
+                <ResultBlock placeholder={true} key={2}/>,
+                <ResultBlock placeholder={true} key={3}/>,
+                <ResultBlock placeholder={true} key={4}/>,
+            ];
+        } else {
+            console.log(this.state);
+            resultsBlocks = this.state.results.hits.hits.map(
+                (result, idx) => <ResultBlock result={result} placeholder={false} key={idx}/>
+            );
+        }
 
         return <div id="result-page-frame">
             <div id="result-page-padding-left" />
-            <div id="result-page-frame">
+            <div id="result-page-content-frame">
                 <div className="result-header-container">
                     <div className="back-button-icon" onClick={this.onClickBack.bind(this)}>
-                        <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="gray" />
+                        {/*
+                            This SVG was generated in Inkscape. Aggravatingly, the translate
+                            transform is original to the file that Inkscape creates,
+                            even in plain SVG mode, and the offsets are plain wrong. I had to
+                            redo the positioning of the elements by hand using the Inspector. I
+                            guess Inkscape is a very poor fit for this use case. :(
+                        */}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <g transform="translate(-60,-135.5) scale(0.95 0.95)">
+                                <path id="path16" d="m 72.098955,147.41071 -7.228795,7.2288 7.228795,7.22879" style={{fill: 'none', stroke: 'gray', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'miter', strokeMiterlimit: 4}} />
+                                <path id="path18" d="M 64.87016,154.63951 H 84.0997" style={{fill: 'none', stroke: 'gray', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'miter', strokeMiterlimit: 4}} />
+                            </g>
                         </svg>
                     </div>
                     <div className="result-query">
-                        {text}
+                        {this.state.query}
                     </div>
+                </div>
+                <div className="result-blocks-frame">
+                    {resultsBlocks}
                 </div>
             </div>
             <div id="result-page-padding-right" />
