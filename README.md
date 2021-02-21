@@ -1,6 +1,10 @@
 # aleksey-writes
 
-A personal archival and retrieval service for my writing. Currently a work in progress.
+A personal archival and retrieval service for my writing, circa 2016-2020. A small side project I worked on for fun, and to help motivate me to learn a bit of Rust.
+
+![](https://i.imgur.com/OqfmV9I.png)
+
+![](https://i.imgur.com/lbaH5vH.png)
 
 ## deployment (local)
 
@@ -21,4 +25,10 @@ A personal archival and retrieval service for my writing. Currently a work in pr
         aleksey-writes/elasticsearch
     ```
 
-4. Everything past that is a work in progress!
+4. Build and serve the webapp:
+
+    ```bash
+    # PWD=/path/to/aleksey-writes/js
+    $ npm run-script build:local
+    $ nmp run-script serve:local
+    ```
