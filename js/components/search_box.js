@@ -1,5 +1,6 @@
 import React from 'react';
 import { Component } from 'react';
+import { getResults } from '../functions/search';
 
 class SearchBox extends Component {
     constructor() {
@@ -18,6 +19,30 @@ class SearchBox extends Component {
         if (this.state.query !== '') {
             this.props.history.push(`/query?text=${this.state.query}`);
         }
+    }
+
+    onClickLucky() {
+        getResults(this.state.query)
+        .then(response => {
+            response.json().then(results => {
+                let hits = results.hits.hits;
+                // If we find no hits do nothing, otherwise redirect the user to the first match.
+                // If it's a medium.com article, send them to the WaybackMachine, otherwise, try
+                // to send them to the live page.
+                if (hits.length !== 0) {
+                    let firstHit = hits[0];
+                    let originalLink = firstHit._source.link;
+                    let backupLink = firstHit._source.backup;
+                    let documentType = firstHit._source.document_type;
+
+                    let target = (documentType === "medium") ? backupLink : originalLink;
+                    window.location.assign(target);  // Bye bye!
+                } else {
+                    console.log("Could not get lucky, your query returned no hits!.")
+                }
+            })
+        })
+        .catch(_ => console.log("Could not get lucky, the ES service did not respond :(."))
     }
 
     handleEnterKeyPress(e) {
@@ -41,7 +66,7 @@ class SearchBox extends Component {
                 </div>
                 <div className="search-button-container">
                     <input type="button" value="Search" className="search-button" onClick={this.onClickSearch.bind(this)} />
-                    <input type="button" value="I'm Feeling Lucky" className="search-button" />
+                    <input type="button" value="I'm Feeling Lucky" className="search-button" onClick={this.onClickLucky.bind(this) } />
                 </div>
             </div>
             <div id="search-page-padding-right" />

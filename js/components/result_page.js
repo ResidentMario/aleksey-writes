@@ -1,6 +1,7 @@
 import React from 'react';
 import { Component } from 'react';
 import ResultBlock from './result_block';
+import { getResults } from '../functions/search';
 class ResultPage extends Component {
     constructor() {
         super();
@@ -17,16 +18,8 @@ class ResultPage extends Component {
         this.props.history.goBack();
     }
 
-    getResults() {
-        // NOTE(aleksey): we handle the case where the request fails, but not the case where the
-        // request is timing out. Mostly because there is no built-in timeout support in the
-        // native fetch API. Hopefully the service is well-behaved in this regard!
-        const esUrl = process.env.ELASTICSEARCH_SERVICE_URL;
-        return fetch(esUrl, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: `{"query": {"match": {"content": {"query": "${this.state.query}"}}}}`
-        })
+    fetch() {
+        return getResults(this.state.query)
         .then(response => {
             response.json().then(results => {
                 this.setState({...this.state, "results": results, "reached_es": true});
@@ -36,7 +29,7 @@ class ResultPage extends Component {
     }
 
     componentDidMount() {
-        this.getResults();
+        this.fetch();
     }
 
     render() {
@@ -51,7 +44,8 @@ class ResultPage extends Component {
         }
 
         let resultsBlocks = [];
-        if (this.state.results === null) {            
+        if (this.state.results === null) {
+            // ES query has not finished executing yet.
             resultsBlocks = [
                 <ResultBlock placeholder={true} key={0}/>,
                 <ResultBlock placeholder={true} key={1}/>,
@@ -59,8 +53,10 @@ class ResultPage extends Component {
                 <ResultBlock placeholder={true} key={3}/>,
                 <ResultBlock placeholder={true} key={4}/>,
             ];
+        } else if (this.state.results.hits.hits.length === 0) {
+            // No hits, e.g. no matches.
+            resultsBlocks = [<ResultBlock placeholder={true} key={0}/>];
         } else {
-            console.log(this.state);
             resultsBlocks = this.state.results.hits.hits.map(
                 (result, idx) => <ResultBlock result={result} placeholder={false} key={idx}/>
             );
