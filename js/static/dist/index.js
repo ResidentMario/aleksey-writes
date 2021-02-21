@@ -332,7 +332,8 @@ var ResultPage = /*#__PURE__*/function (_Component) {
           strokeMiterlimit: 4
         }
       })))), /*#__PURE__*/_react["default"].createElement("div", {
-        className: "result-query"
+        className: "result-query",
+        onClick: this.onClickBack.bind(this)
       }, this.state.query)), /*#__PURE__*/_react["default"].createElement("div", {
         className: "result-blocks-frame"
       }, resultsBlocks)), /*#__PURE__*/_react["default"].createElement("div", {
@@ -405,10 +406,15 @@ var SearchBox = /*#__PURE__*/function (_Component) {
   _createClass(SearchBox, [{
     key: "onChange",
     value: function onChange(e) {
-      // Remember that state changes in React are asynchronous promises.
       this.setState({
         query: e.target.value
       });
+    }
+  }, {
+    key: "handleEnterKeyPress",
+    // Handle Enter keypresses as "Go".
+    value: function handleEnterKeyPress(e) {
+      if (e.charCode == 13) this.onClickSearch();
     }
   }, {
     key: "onClickSearch",
@@ -420,6 +426,8 @@ var SearchBox = /*#__PURE__*/function (_Component) {
   }, {
     key: "onClickLucky",
     value: function onClickLucky() {
+      if (this.state.query === "") return; // Don't search empty text.
+
       (0, _search.getResults)(this.state.query).then(function (response) {
         response.json().then(function (results) {
           var hits = results.hits.hits; // If we find no hits do nothing, otherwise redirect the user to the first match.
@@ -440,14 +448,6 @@ var SearchBox = /*#__PURE__*/function (_Component) {
       })["catch"](function (_) {
         return console.log("Could not get lucky, the ES service did not respond :(.");
       });
-    }
-  }, {
-    key: "handleEnterKeyPress",
-    value: function handleEnterKeyPress(e) {
-      if (e.charCode == 13) {
-        // Enter
-        this.onClickSearch();
-      }
     }
   }, {
     key: "render",

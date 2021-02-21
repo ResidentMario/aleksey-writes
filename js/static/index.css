@@ -120,6 +120,7 @@ body {
     margin-left: 0.8em;
 }
 .result-query {
+    cursor: pointer;
     margin: 0.4em;
 }
 .result-blocks-frame {

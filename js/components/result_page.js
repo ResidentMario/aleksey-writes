@@ -81,7 +81,7 @@ class ResultPage extends Component {
                             </g>
                         </svg>
                     </div>
-                    <div className="result-query">
+                    <div className="result-query" onClick={this.onClickBack.bind(this)}>
                         {this.state.query}
                     </div>
                 </div>

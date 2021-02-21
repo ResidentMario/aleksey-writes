@@ -5,15 +5,13 @@ import { getResults } from '../functions/search';
 class SearchBox extends Component {
     constructor() {
         super();
-        this.state = {
-            query: '',
-        }
+        this.state = { query: '' }
     }
 
-    onChange(e) {
-        // Remember that state changes in React are asynchronous promises.
-        this.setState({query: e.target.value});
-    }
+    onChange(e) { this.setState({query: e.target.value}) };
+
+    // Handle Enter keypresses as "Go".
+    handleEnterKeyPress(e) { if (e.charCode == 13) this.onClickSearch(); };
 
     onClickSearch() {
         if (this.state.query !== '') {
@@ -22,6 +20,7 @@ class SearchBox extends Component {
     }
 
     onClickLucky() {
+        if (this.state.query === "") return;  // Don't search empty text.
         getResults(this.state.query)
         .then(response => {
             response.json().then(results => {
@@ -43,12 +42,6 @@ class SearchBox extends Component {
             })
         })
         .catch(_ => console.log("Could not get lucky, the ES service did not respond :(."))
-    }
-
-    handleEnterKeyPress(e) {
-        if (e.charCode == 13) {  // Enter
-            this.onClickSearch();
-        }
     }
 
     render() {
